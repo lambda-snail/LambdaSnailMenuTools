@@ -1,18 +1,23 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
-
-#pragma once
+﻿#pragma once
 
 #include "CoreMinimal.h"
 #include "NativeGameplayTags.h"
 #include "Components/SlateWrapperTypes.h"
 #include "GameFramework/HUD.h"
-#include "Layers/LayersSubsystem.h"
 #include "LambdaSnailHUD.generated.h"
 
 class UUserWidget;
 
+UENUM(BlueprintType)
+enum class EInputMode : uint8
+{
+	UIOnly,
+	GameOnly,
+	UIAndGame
+};
+
 USTRUCT(BlueprintType)
-struct FWidgetDefinition
+struct FScreenDefinition
 {
 	GENERATED_BODY()
 
@@ -21,6 +26,31 @@ struct FWidgetDefinition
 
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<UUserWidget> WidgetType;
+
+	UPROPERTY(EditDefaultsOnly)
+	ESlateVisibility PreferredVisibility { ESlateVisibility::HitTestInvisible };
+	
+	UPROPERTY(EditDefaultsOnly)
+	EInputMode PreferredInputMode;
+
+	UPROPERTY(EditDefaultsOnly)
+	bool bShowMouseCursor { false };
+};
+
+USTRUCT()
+struct FManagedScreen
+{
+	GENERATED_BODY()
+
+	FGameplayTag WidgetTag;
+
+	UPROPERTY()
+	TObjectPtr<UUserWidget> Widget;
+	bool bShowMouseCursor { false };
+	
+	EInputMode PreferredInputMode;
+
+	ESlateVisibility PreferredVisibility;
 };
 
 enum class ELayer : uint8
@@ -47,50 +77,55 @@ class LAMBDASNAILMENUTOOLS_API ALambdaSnailHUD : public AHUD
 	GENERATED_BODY()
 public:
 
-	using FWidgetArray = TArray<TObjectPtr<UUserWidget>>;
-	using FWidgetMap = TMap<FGameplayTag, TObjectPtr<UUserWidget>>;
+	using FScreenPtr = TSharedPtr<FManagedScreen>;
+	using FScreenArray = TArray<FScreenPtr>;
+	using FScreenMap = TMap<FGameplayTag, FScreenPtr>;
+	using FWidgetDefinitionArray = TArray<FScreenDefinition>;
 	
 	//void AddWidget(ELayer, FGameplayTag, UUserWidget*);
 	//void AddWidget(ELayer, FGameplayTag, TSubclassOf<UUserWidget>&);
 
 	// TODO: Do we need a stack for each layer? Or some layers?
 	UFUNCTION(BlueprintCallable)
-	void PushWidget(FGameplayTag const WidgetTag, ESlateVisibility const Visibility = ESlateVisibility::HitTestInvisible);
+	void PushScreen(FGameplayTag const WidgetTag, ESlateVisibility const Visibility = ESlateVisibility::HitTestInvisible);
 
 	UFUNCTION(BlueprintCallable)
-	void PopWidget(FGameplayTag const WidgetLayerTag);
-
-
+	void PopScreen(FGameplayTag const WidgetLayerTag);
+	void InitDataStructures(APlayerController* Controller, FScreenMap& OutMap, FWidgetDefinitionArray const& InDefinitionsArray);
+	
 	//void CollapseAll(bool bShouldCollapseHud);
 
 protected:
 	virtual void BeginPlay() override;
 	
-	UPROPERTY(BlueprintReadOnly)
-	TObjectPtr<UUserWidget> HUDWidget;
+	FScreenPtr HUDScreen;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TSubclassOf<UUserWidget> HudWidgetType;
+	FScreenDefinition HudScreenDefinition;
 
 	UPROPERTY(EditDefaultsOnly)
-	TArray<FWidgetDefinition> InGameMenuWidgetDefinitions;
+	TArray<FScreenDefinition> InGameMenuScreenDefinitions;
 
 	UPROPERTY(EditDefaultsOnly)
-	TArray<FWidgetDefinition> MenuWidgetDefinitions;
+	TArray<FScreenDefinition> MenuScreenDefinitions;
 
+	UPROPERTY(EditDefaultsOnly)
+	TArray<FScreenDefinition> ModalScreenDefinitions;
 	
-	UPROPERTY(BlueprintReadOnly)
-	TMap<FGameplayTag, TObjectPtr<UUserWidget>> InGameMenuWidgets {};
-	TArray<TObjectPtr<UUserWidget>> ActiveInGameMenuWidgets {};
+	FScreenMap		InGameMenuScreens {};
+	FScreenArray	ActiveInGameMenuScreens {};
 	
-	UPROPERTY(BlueprintReadOnly)
-	TMap<FGameplayTag, TObjectPtr<UUserWidget>> MenuWidgets {};
-	TArray<TObjectPtr<UUserWidget>> ActiveMenuWidgets {};
-
-	UPROPERTY(BlueprintReadOnly)
-	TMap<FGameplayTag, TObjectPtr<UUserWidget>> ModalWidgets {};
-	TArray<TObjectPtr<UUserWidget>> ActiveModalWidgets {};
+	FScreenMap		MenuScreens {};
+	FScreenArray	ActiveMenuScreens {};
+	
+	FScreenMap		ModalScreens {};
+	FScreenArray	ActiveModalScreens {};
 
 private:
-	FWidgetArray& ResolveWidgetArray(FGameplayTag WidgetTag);
-	FWidgetMap& ResolveWidgetMap(FGameplayTag WidgetTag);
+	FScreenArray& ResolveScreenArray(FGameplayTag WidgetTag);
+	FScreenMap& ResolveScreenMap(FGameplayTag WidgetTag);
+	
+	void SetControllerOptions(FScreenPtr const& Screen) const;
+	void SetControllerOptions(FScreenPtr const& Screen, APlayerController* PlayerController) const;
+	void SetInputMode(EInputMode InputMode, APlayerController* PlayerController) const;
+	void CreateScreenPtr(APlayerController* Controller, const FScreenDefinition& WidgetDefinition, ALambdaSnailHUD::FScreenPtr& OutScreen) const;
 };

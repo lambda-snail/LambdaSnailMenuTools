@@ -2,16 +2,17 @@
 
 #include "Blueprint/UserWidget.h"
 #include "MenuTags.h"
+#include "Logging/StructuredLog.h"
 
-void ALambdaSnailHUD::PushWidget(FGameplayTag const WidgetTag, ESlateVisibility const Visibility)
+void ALambdaSnailHUD::PushScreen(FGameplayTag const WidgetTag, ESlateVisibility const Visibility)
 {
-	FWidgetMap const& Map = ResolveWidgetMap(WidgetTag);
+	FScreenMap const& Map = ResolveScreenMap(WidgetTag);
 	if(not Map.Contains(WidgetTag))
 	{
 		return;
 	}
 
-	FWidgetArray& ActiveWidgets = ResolveWidgetArray(WidgetTag);
+	FScreenArray& ActiveWidgets = ResolveScreenArray(WidgetTag);
 	if(ActiveWidgets.Num() != 0)
 	{
 		if(ActiveWidgets.Last() == Map[WidgetTag])
@@ -20,28 +21,60 @@ void ALambdaSnailHUD::PushWidget(FGameplayTag const WidgetTag, ESlateVisibility 
 			return;	
 		}
 
-		TObjectPtr<UUserWidget> const CurrentWidget = ActiveWidgets.Last();
-		CurrentWidget->SetVisibility(ESlateVisibility::Collapsed);
+		FScreenPtr const CurrentScren = ActiveWidgets.Last();
+		CurrentScren->Widget->SetVisibility(ESlateVisibility::Collapsed);
 	}
 
-	TObjectPtr<UUserWidget> const Widget = *Map.Find(WidgetTag);
-	ActiveWidgets.Push(Widget);
-	Widget->SetVisibility(Visibility);
+	FScreenPtr const Screen = *Map.Find(WidgetTag);
+	ActiveWidgets.Push(Screen);
+	Screen->Widget->SetVisibility(Screen->PreferredVisibility);
+
+	SetControllerOptions(Screen);
 }
 
-void ALambdaSnailHUD::PopWidget(FGameplayTag const WidgetLayerTag)
+void ALambdaSnailHUD::PopScreen(FGameplayTag const WidgetLayerTag)
 {
-	FWidgetArray& ActiveWidgets = ResolveWidgetArray(WidgetLayerTag);
+	FScreenArray& ActiveWidgets = ResolveScreenArray(WidgetLayerTag);
 	if(ActiveWidgets.Num() > 0)
 	{
-		TObjectPtr<UUserWidget> const CurrentWidget = ActiveWidgets.Pop(EAllowShrinking::No);
-		CurrentWidget->SetVisibility(ESlateVisibility::Collapsed);
+		FScreenPtr const CurrentWidget = ActiveWidgets.Pop(EAllowShrinking::No);
+		CurrentWidget->Widget->SetVisibility(ESlateVisibility::Collapsed);
 		
 		if(ActiveWidgets.Num() > 0)
 		{
-			TObjectPtr<UUserWidget> const NextWidget = ActiveWidgets.Last();
-			NextWidget->SetVisibility(ESlateVisibility::HitTestInvisible);
+			FScreenPtr const NextWidget = ActiveWidgets.Last();
+			//NextWidget->Widget->SetVisibility(NextWidget->PreferredVisibility);
+			SetControllerOptions(NextWidget);
 		}
+		else
+		{
+			SetControllerOptions(HUDScreen);
+		}
+	}
+}
+
+void ALambdaSnailHUD::CreateScreenPtr(APlayerController* Controller, const FScreenDefinition& WidgetDefinition, FScreenPtr& OutScreen) const
+{
+	UUserWidget* Widget = CreateWidget<UUserWidget>(Controller, WidgetDefinition.WidgetType);
+	Widget->AddToViewport();
+	Widget->SetVisibility(ESlateVisibility::Collapsed);
+	
+	OutScreen = MakeShared<FManagedScreen>();
+	OutScreen->WidgetTag = WidgetDefinition.WidgetTag;
+	OutScreen->Widget = Widget;
+	OutScreen->bShowMouseCursor = WidgetDefinition.bShowMouseCursor;
+	OutScreen->PreferredInputMode = WidgetDefinition.PreferredInputMode;
+	OutScreen->PreferredVisibility =  WidgetDefinition.PreferredVisibility;
+}
+
+void ALambdaSnailHUD::InitDataStructures(APlayerController* Controller, FScreenMap& OutMap, FWidgetDefinitionArray const& InDefinitionsArray)
+{
+	for(auto& WidgetDefinition : InDefinitionsArray)
+	{
+		FScreenPtr Screen;
+		CreateScreenPtr(Controller, WidgetDefinition, Screen);
+
+		OutMap.Add(WidgetDefinition.WidgetTag, Screen);
 	}
 }
 
@@ -49,63 +82,111 @@ void ALambdaSnailHUD::BeginPlay()
 {
 	if(APlayerController* Controller = GetOwningPlayerController())
 	{
-		if(HudWidgetType)
+		if(HudScreenDefinition.WidgetType)
 		{
-			HUDWidget = CreateWidget<UUserWidget>(Controller, HudWidgetType);
-			HUDWidget->AddToViewport();
-			HUDWidget->SetVisibility(ESlateVisibility::HitTestInvisible);
+			// HUDWidget->Widget = CreateWidget<UUserWidget>(Controller, HudWidgetDefinition.WidgetType);
+			// HUDWidget->Widget->AddToViewport();
+			// HUDWidget->Widget->SetVisibility(HudWidgetDefinition.PreferredVisibility);
+			//
+			// HUDWidget->WidgetTag = HudWidgetDefinition.WidgetTag;
+			// HUDWidget->bShowMouseCursor = HudWidgetDefinition.bShowMouseCursor;
+			// HUDWidget->PreferredVisibility = HudWidgetDefinition.PreferredVisibility;
+			// HUDWidget->InputMode
+
+			CreateScreenPtr(Controller, HudScreenDefinition, HUDScreen);
+			HUDScreen->Widget->SetVisibility(HUDScreen->PreferredVisibility);
 		}
+
 		
-		FInputModeGameOnly const InputMode;
-		Controller->SetInputMode(InputMode);
+		
+		// FInputModeGameOnly const InputMode;
+		// Controller->SetInputMode(InputMode);
 
-		InGameMenuWidgets = TMap<FGameplayTag, TObjectPtr<UUserWidget>>();
-		for(auto& [Tag, Type] : InGameMenuWidgetDefinitions)
-		{
-			UUserWidget* Widget = CreateWidget<UUserWidget>(Controller, Type);
-			Widget->AddToViewport();
-			Widget->SetVisibility(ESlateVisibility::Collapsed);
-			InGameMenuWidgets.Add(Tag, Widget);
-		}
-
-		for(auto& [Tag, Type] : MenuWidgetDefinitions)
-		{
-			UUserWidget* Widget = CreateWidget<UUserWidget>(Controller, Type);
-			Widget->AddToViewport();
-			Widget->SetVisibility(ESlateVisibility::Collapsed);
-			MenuWidgets.Add(Tag, Widget);
-		}
+		InitDataStructures(Controller, InGameMenuScreens, InGameMenuScreenDefinitions);
+		InitDataStructures(Controller, MenuScreens, MenuScreenDefinitions);
+		InitDataStructures(Controller, ModalScreens, ModalScreenDefinitions);
 	}
 
 	Super::BeginPlay();
 }
 
-ALambdaSnailHUD::FWidgetArray& ALambdaSnailHUD::ResolveWidgetArray(FGameplayTag WidgetTag)
+ALambdaSnailHUD::FScreenArray& ALambdaSnailHUD::ResolveScreenArray(FGameplayTag WidgetTag)
 {
 	if(WidgetTag.MatchesTag(TAG_LambdaSnail_Ui_InGameMenu))
 	{
-		return ActiveInGameMenuWidgets;
+		return ActiveInGameMenuScreens;
 	}
 	
 	if(WidgetTag.MatchesTag(TAG_LambdaSnail_Ui_Menu))
     {
-    	return ActiveMenuWidgets;
+    	return ActiveMenuScreens;
     }
 	
-	return ActiveModalWidgets;
+	return ActiveModalScreens;
 }
 
-ALambdaSnailHUD::FWidgetMap& ALambdaSnailHUD::ResolveWidgetMap(FGameplayTag WidgetTag)
+ALambdaSnailHUD::FScreenMap& ALambdaSnailHUD::ResolveScreenMap(FGameplayTag WidgetTag)
 {
 	if(WidgetTag.MatchesTag(TAG_LambdaSnail_Ui_InGameMenu))
 	{
-		return InGameMenuWidgets;
+		return InGameMenuScreens;
 	}
 	
 	if(WidgetTag.MatchesTag(TAG_LambdaSnail_Ui_Menu))
 	{
-		return MenuWidgets;
+		return MenuScreens;
 	}
 	
-	return ModalWidgets;
+	return ModalScreens;
+}
+
+void ALambdaSnailHUD::SetControllerOptions(FScreenPtr const& Screen) const
+{
+	UWorld const* World = GetWorld();
+	if(not World)
+	{
+		return;
+	}
+
+	APlayerController* PlayerController = World->GetFirstPlayerController();
+	if(not PlayerController)
+	{
+		return;
+	}
+
+	SetControllerOptions(Screen, PlayerController);
+}
+
+void ALambdaSnailHUD::SetInputMode(EInputMode InputMode, APlayerController* PlayerController) const
+{
+	switch(InputMode)
+	{
+	case EInputMode::GameOnly:
+		{
+			FInputModeGameOnly InputModeData{};
+			PlayerController->SetInputMode(InputModeData);
+		}
+		break;
+	case EInputMode::UIOnly:
+		{
+			FInputModeUIOnly InputModeData{};
+			InputModeData.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+			PlayerController->SetInputMode(InputModeData);
+		}
+		break;
+	case EInputMode::UIAndGame:
+		{
+			FInputModeGameAndUI InputModeData{};
+			PlayerController->SetInputMode(InputModeData);
+		}
+		break;
+	default:
+		UE_LOGFMT(LogTemp, Error, "Unknown input mode: {InputMode}", static_cast<int32>(InputMode));
+	}
+}
+
+void ALambdaSnailHUD::SetControllerOptions(FScreenPtr const& Screen, APlayerController* PlayerController) const
+{
+	PlayerController->SetShowMouseCursor(Screen->bShowMouseCursor);
+	SetInputMode(Screen->PreferredInputMode, PlayerController);
 }
