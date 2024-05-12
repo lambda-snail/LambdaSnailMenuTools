@@ -92,10 +92,11 @@ public:
 	void PopScreen(FGameplayTag const WidgetLayerTag);
 	void InitDataStructures(APlayerController* Controller, FScreenMap& OutMap, FWidgetDefinitionArray const& InDefinitionsArray);
 	
-	//void CollapseAll(bool bShouldCollapseHud);
+	void CollapseAllExceptHUD();
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	
 	FScreenPtr HUDScreen;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
@@ -127,4 +128,6 @@ private:
 	void SetControllerOptions(FScreenPtr const& Screen, APlayerController* PlayerController) const;
 	void SetInputMode(EInputMode InputMode, APlayerController* PlayerController) const;
 	void CreateScreenPtr(APlayerController* Controller, const FScreenDefinition& WidgetDefinition, ALambdaSnailHUD::FScreenPtr& OutScreen) const;
+
+	void TearDown();
 };

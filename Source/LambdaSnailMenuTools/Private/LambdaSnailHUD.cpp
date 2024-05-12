@@ -67,6 +67,31 @@ void ALambdaSnailHUD::CreateScreenPtr(APlayerController* Controller, const FScre
 	OutScreen->PreferredVisibility =  WidgetDefinition.PreferredVisibility;
 }
 
+void ALambdaSnailHUD::TearDown()
+{
+	CollapseAllExceptHUD();
+
+	static auto CleanUp = [](FScreenPtr const& ScreenPointer)
+	{
+		ScreenPointer->Widget->RemoveFromParent();
+	};
+	
+	for ( auto const& [Tag, Screen] : InGameMenuScreens)
+	{
+		CleanUp(Screen);
+	}
+
+	for ( auto const& [Tag, Screen] : MenuScreens)
+	{
+		CleanUp(Screen);
+	}
+
+	for ( auto const& [Tag, Screen] : ModalScreens)
+	{
+		CleanUp(Screen);
+	}
+}
+
 void ALambdaSnailHUD::InitDataStructures(APlayerController* Controller, FScreenMap& OutMap, FWidgetDefinitionArray const& InDefinitionsArray)
 {
 	for(auto& WidgetDefinition : InDefinitionsArray)
@@ -75,6 +100,34 @@ void ALambdaSnailHUD::InitDataStructures(APlayerController* Controller, FScreenM
 		CreateScreenPtr(Controller, WidgetDefinition, Screen);
 
 		OutMap.Add(WidgetDefinition.WidgetTag, Screen);
+	}
+}
+
+void ALambdaSnailHUD::CollapseAllExceptHUD()
+{
+	for ( auto const& [Tag, Screen] : InGameMenuScreens)
+	{
+		Screen->Widget->SetVisibility(ESlateVisibility::Collapsed);
+	}
+
+	for ( auto const& [Tag, Screen] : MenuScreens)
+	{
+		Screen->Widget->SetVisibility(ESlateVisibility::Collapsed);
+	}
+
+	for ( auto const& [Tag, Screen] : ModalScreens)
+	{
+		Screen->Widget->SetVisibility(ESlateVisibility::Collapsed);
+	}
+
+	ActiveInGameMenuScreens.Empty();
+	ActiveMenuScreens.Empty();
+	ActiveModalScreens.Empty();
+
+	if(HUDScreen)
+	{
+		SetControllerOptions(HUDScreen);
+		HUDScreen->Widget->SetVisibility(HUDScreen->PreferredVisibility);	
 	}
 }
 
@@ -94,6 +147,12 @@ void ALambdaSnailHUD::BeginPlay()
 	}
 
 	Super::BeginPlay();
+}
+
+void ALambdaSnailHUD::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	TearDown();
+	Super::EndPlay(EndPlayReason);
 }
 
 ALambdaSnailHUD::FScreenArray& ALambdaSnailHUD::ResolveScreenArray(FGameplayTag WidgetTag)
