@@ -49,9 +49,12 @@ void ALambdaSnailHUD::BeginPlay()
 {
 	if(APlayerController* Controller = GetOwningPlayerController())
 	{
-		HUDWidget = CreateWidget<UUserWidget>(Controller, HudWidgetType);
-		HUDWidget->AddToViewport();
-		HUDWidget->SetVisibility(ESlateVisibility::HitTestInvisible);
+		if(HudWidgetType)
+		{
+			HUDWidget = CreateWidget<UUserWidget>(Controller, HudWidgetType);
+			HUDWidget->AddToViewport();
+			HUDWidget->SetVisibility(ESlateVisibility::HitTestInvisible);
+		}
 		
 		FInputModeGameOnly const InputMode;
 		Controller->SetInputMode(InputMode);
