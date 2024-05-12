@@ -84,10 +84,9 @@ public:
 	
 	//void AddWidget(ELayer, FGameplayTag, UUserWidget*);
 	//void AddWidget(ELayer, FGameplayTag, TSubclassOf<UUserWidget>&);
-
-	// TODO: Do we need a stack for each layer? Or some layers?
+	
 	UFUNCTION(BlueprintCallable)
-	void PushScreen(FGameplayTag const WidgetTag, ESlateVisibility const Visibility = ESlateVisibility::HitTestInvisible);
+	void PushScreen(FGameplayTag const WidgetTag);
 
 	UFUNCTION(BlueprintCallable)
 	void PopScreen(FGameplayTag const WidgetLayerTag);

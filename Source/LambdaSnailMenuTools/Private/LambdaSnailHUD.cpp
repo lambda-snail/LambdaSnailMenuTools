@@ -4,7 +4,7 @@
 #include "MenuTags.h"
 #include "Logging/StructuredLog.h"
 
-void ALambdaSnailHUD::PushScreen(FGameplayTag const WidgetTag, ESlateVisibility const Visibility)
+void ALambdaSnailHUD::PushScreen(FGameplayTag const WidgetTag)
 {
 	FScreenMap const& Map = ResolveScreenMap(WidgetTag);
 	if(not Map.Contains(WidgetTag))
@@ -84,23 +84,9 @@ void ALambdaSnailHUD::BeginPlay()
 	{
 		if(HudScreenDefinition.WidgetType)
 		{
-			// HUDWidget->Widget = CreateWidget<UUserWidget>(Controller, HudWidgetDefinition.WidgetType);
-			// HUDWidget->Widget->AddToViewport();
-			// HUDWidget->Widget->SetVisibility(HudWidgetDefinition.PreferredVisibility);
-			//
-			// HUDWidget->WidgetTag = HudWidgetDefinition.WidgetTag;
-			// HUDWidget->bShowMouseCursor = HudWidgetDefinition.bShowMouseCursor;
-			// HUDWidget->PreferredVisibility = HudWidgetDefinition.PreferredVisibility;
-			// HUDWidget->InputMode
-
 			CreateScreenPtr(Controller, HudScreenDefinition, HUDScreen);
 			HUDScreen->Widget->SetVisibility(HUDScreen->PreferredVisibility);
 		}
-
-		
-		
-		// FInputModeGameOnly const InputMode;
-		// Controller->SetInputMode(InputMode);
 
 		InitDataStructures(Controller, InGameMenuScreens, InGameMenuScreenDefinitions);
 		InitDataStructures(Controller, MenuScreens, MenuScreenDefinitions);
