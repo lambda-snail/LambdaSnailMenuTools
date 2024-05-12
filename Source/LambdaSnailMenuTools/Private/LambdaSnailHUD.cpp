@@ -129,6 +129,15 @@ void ALambdaSnailHUD::CollapseAllExceptHUD()
 		SetControllerOptions(HUDScreen);
 		HUDScreen->Widget->SetVisibility(HUDScreen->PreferredVisibility);	
 	}
+	else
+	{
+		// Slightly duplicated code, can we refactor to minimize duplication?
+		if(UWorld const* World = GetWorld(); APlayerController* PlayerController = World->GetFirstPlayerController())
+		{
+			FInputModeGameOnly InputModeData{};
+			PlayerController->SetInputMode(InputModeData);	
+		}
+	}
 }
 
 void ALambdaSnailHUD::BeginPlay()
