@@ -160,6 +160,12 @@ void ALambdaSnailHUD::BeginPlay()
 
 void ALambdaSnailHUD::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+	if(EndPlayReason == EEndPlayReason::Type::LevelTransition)
+	{
+		CollapseAllExceptHUD();
+		return;
+	}
+	
 	TearDown();
 	Super::EndPlay(EndPlayReason);
 }
