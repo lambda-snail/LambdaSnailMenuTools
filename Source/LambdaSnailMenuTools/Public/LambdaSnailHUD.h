@@ -46,6 +46,9 @@ class LAMBDASNAILMENUTOOLS_API ALambdaSnailHUD : public AHUD
 {
 	GENERATED_BODY()
 public:
+
+	using FWidgetArray = TArray<TObjectPtr<UUserWidget>>;
+	using FWidgetMap = TMap<FGameplayTag, TObjectPtr<UUserWidget>>;
 	
 	//void AddWidget(ELayer, FGameplayTag, UUserWidget*);
 	//void AddWidget(ELayer, FGameplayTag, TSubclassOf<UUserWidget>&);
@@ -81,7 +84,13 @@ protected:
 	
 	UPROPERTY(BlueprintReadOnly)
 	TMap<FGameplayTag, TObjectPtr<UUserWidget>> MenuWidgets {};
+	TArray<TObjectPtr<UUserWidget>> ActiveMenuWidgets {};
 
 	UPROPERTY(BlueprintReadOnly)
 	TMap<FGameplayTag, TObjectPtr<UUserWidget>> ModalWidgets {};
+	TArray<TObjectPtr<UUserWidget>> ActiveModalWidgets {};
+
+private:
+	FWidgetArray& ResolveWidgetArray(FGameplayTag WidgetTag);
+	FWidgetMap& ResolveWidgetMap(FGameplayTag WidgetTag);
 };

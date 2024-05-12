@@ -5,37 +5,41 @@
 
 void ALambdaSnailHUD::PushWidget(FGameplayTag const WidgetTag, ESlateVisibility const Visibility)
 {
-	if(not WidgetTag.MatchesTag(TAG_LambdaSnail_Ui_InGameMenu.GetTag()) or not InGameMenuWidgets.Contains(WidgetTag))
+	FWidgetMap const& Map = ResolveWidgetMap(WidgetTag);
+	if(not Map.Contains(WidgetTag))
 	{
 		return;
 	}
 
-	if(ActiveInGameMenuWidgets.Num() > 0)
+	FWidgetArray& ActiveWidgets = ResolveWidgetArray(WidgetTag);
+	if(ActiveWidgets.Num() != 0)
 	{
-		TObjectPtr<UUserWidget> const CurrentWidget = ActiveInGameMenuWidgets.Last();
+		if(ActiveWidgets.Last() == Map[WidgetTag])
+		{
+			// Active widget same as the one we're trying to push - do nothing
+			return;	
+		}
+
+		TObjectPtr<UUserWidget> const CurrentWidget = ActiveWidgets.Last();
 		CurrentWidget->SetVisibility(ESlateVisibility::Collapsed);
 	}
-	
-	TObjectPtr<UUserWidget> const Widget = *InGameMenuWidgets.Find(WidgetTag);
-	ActiveInGameMenuWidgets.Push(Widget);
+
+	TObjectPtr<UUserWidget> const Widget = *Map.Find(WidgetTag);
+	ActiveWidgets.Push(Widget);
 	Widget->SetVisibility(Visibility);
 }
 
 void ALambdaSnailHUD::PopWidget(FGameplayTag const WidgetLayerTag)
 {
-	if(not WidgetLayerTag.MatchesTag(TAG_LambdaSnail_Ui_InGameMenu.GetTag()))
+	FWidgetArray& ActiveWidgets = ResolveWidgetArray(WidgetLayerTag);
+	if(ActiveWidgets.Num() > 0)
 	{
-		return;
-	}
-
-	if(ActiveInGameMenuWidgets.Num() > 0)
-	{
-		TObjectPtr<UUserWidget> const CurrentWidget = ActiveInGameMenuWidgets.Pop(EAllowShrinking::No);
+		TObjectPtr<UUserWidget> const CurrentWidget = ActiveWidgets.Pop(EAllowShrinking::No);
 		CurrentWidget->SetVisibility(ESlateVisibility::Collapsed);
 		
-		if(ActiveInGameMenuWidgets.Num() > 0)
+		if(ActiveWidgets.Num() > 0)
 		{
-			TObjectPtr<UUserWidget> const NextWidget = ActiveInGameMenuWidgets.Last();
+			TObjectPtr<UUserWidget> const NextWidget = ActiveWidgets.Last();
 			NextWidget->SetVisibility(ESlateVisibility::HitTestInvisible);
 		}
 	}
@@ -66,9 +70,39 @@ void ALambdaSnailHUD::BeginPlay()
 			UUserWidget* Widget = CreateWidget<UUserWidget>(Controller, Type);
 			Widget->AddToViewport();
 			Widget->SetVisibility(ESlateVisibility::Collapsed);
-			InGameMenuWidgets.Add(Tag, Widget);
+			MenuWidgets.Add(Tag, Widget);
 		}
 	}
 
 	Super::BeginPlay();
+}
+
+ALambdaSnailHUD::FWidgetArray& ALambdaSnailHUD::ResolveWidgetArray(FGameplayTag WidgetTag)
+{
+	if(WidgetTag.MatchesTag(TAG_LambdaSnail_Ui_InGameMenu))
+	{
+		return ActiveInGameMenuWidgets;
+	}
+	
+	if(WidgetTag.MatchesTag(TAG_LambdaSnail_Ui_Menu))
+    {
+    	return ActiveMenuWidgets;
+    }
+	
+	return ActiveModalWidgets;
+}
+
+ALambdaSnailHUD::FWidgetMap& ALambdaSnailHUD::ResolveWidgetMap(FGameplayTag WidgetTag)
+{
+	if(WidgetTag.MatchesTag(TAG_LambdaSnail_Ui_InGameMenu))
+	{
+		return InGameMenuWidgets;
+	}
+	
+	if(WidgetTag.MatchesTag(TAG_LambdaSnail_Ui_Menu))
+	{
+		return MenuWidgets;
+	}
+	
+	return ModalWidgets;
 }
