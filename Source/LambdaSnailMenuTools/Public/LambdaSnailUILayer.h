@@ -8,35 +8,6 @@
 class UNamedSlot;
 class ULambdaSnailScreen;
 
-UENUM(BlueprintType)
-enum class EInputMode : uint8
-{
-	UIOnly,
-	GameOnly,
-	UIAndGame
-};
-
-USTRUCT(BlueprintType)
-struct FLayerParams
-{
-	GENERATED_BODY()
-
-	UPROPERTY(EditDefaultsOnly)
-	FGameplayTag WidgetTag;
-
-	UPROPERTY(EditDefaultsOnly)
-	TSubclassOf<UUserWidget> WidgetType;
-
-	UPROPERTY(EditDefaultsOnly)
-	ESlateVisibility PreferredVisibility { ESlateVisibility::HitTestInvisible };
-	
-	UPROPERTY(EditDefaultsOnly)
-	EInputMode PreferredInputMode { EInputMode::GameOnly };
-
-	UPROPERTY(EditDefaultsOnly)
-	bool bShowMouseCursor { false };
-};
-
 USTRUCT()
 struct FScreenCreationParams
 {

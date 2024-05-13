@@ -1,29 +1,34 @@
 ﻿#include "LambdaSnailHUD.h"
 
 #include "LambdaSnailUILayer.h"
-#include "Blueprint/UserWidget.h"
-#include "MenuTags.h"
 #include "Logging/StructuredLog.h"
 
-void ALambdaSnailHUD::RegisterLayer(FGameplayTag const LayerTag, ULambdaSnailUILayer* Layer)
+void ALambdaSnailHUD::RegisterLayer(FLayerParams const LayerParams)
 {
-	LayerMap.Add(LayerTag, Layer);
-	Layer->AddToViewport();
+	LayerMap.Add(LayerParams.LayerTag, LayerParams);
+	LayerParams.Layer->AddToViewport();
 }
 
 void ALambdaSnailHUD::PushScreenToLayer(FGameplayTag const LayerTag, FGameplayTag const ScreenTag)
 {
-	if(TObjectPtr<ULambdaSnailUILayer> const* Layer = LayerMap.Find(LayerTag))
+	if(FLayerParams const* LayerParams = LayerMap.Find(LayerTag))
 	{
-		(*Layer)->PushScreen(ScreenTag);
+		LayerParams->Layer->PushScreen(ScreenTag);
+		
+		APlayerController* PlayerController = GetWorld()->GetFirstPlayerController();
+		if(PlayerController)
+		{
+			PlayerController->SetShowMouseCursor(LayerParams->bShowMouseCursor);
+			SetInputMode(LayerParams->InputMode, PlayerController);
+		}
 	}
 }
 
 void ALambdaSnailHUD::PopScreenFromLayer(FGameplayTag const LayerTag)
 {
-	if(TObjectPtr<ULambdaSnailUILayer> const* Layer = LayerMap.Find(LayerTag))
+	if(FLayerParams const* LayerParams = LayerMap.Find(LayerTag))
 	{
-		(*Layer)->PopScreen();
+		LayerParams->Layer->PopScreen();
 	}
 }
 
@@ -64,33 +69,33 @@ void ALambdaSnailHUD::CollapseAllExceptHUD()
 // 	SetControllerOptions(Screen, PlayerController);
 // }
 //
-// void ALambdaSnailHUD::SetInputMode(EInputMode InputMode, APlayerController* PlayerController) const
-// {
-// 	switch(InputMode)
-// 	{
-// 	case EInputMode::GameOnly:
-// 		{
-// 			FInputModeGameOnly InputModeData{};
-// 			PlayerController->SetInputMode(InputModeData);
-// 		}
-// 		break;
-// 	case EInputMode::UIOnly:
-// 		{
-// 			FInputModeUIOnly InputModeData{};
-// 			InputModeData.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
-// 			PlayerController->SetInputMode(InputModeData);
-// 		}
-// 		break;
-// 	case EInputMode::UIAndGame:
-// 		{
-// 			FInputModeGameAndUI InputModeData{};
-// 			PlayerController->SetInputMode(InputModeData);
-// 		}
-// 		break;
-// 	default:
-// 		UE_LOGFMT(LogTemp, Error, "Unknown input mode: {InputMode}", static_cast<int32>(InputMode));
-// 	}
-// }
+void ALambdaSnailHUD::SetInputMode(EInputMode InputMode, APlayerController* PlayerController) const
+{
+	switch(InputMode)
+	{
+	case EInputMode::GameOnly:
+		{
+			FInputModeGameOnly InputModeData{};
+			PlayerController->SetInputMode(InputModeData);
+		}
+		break;
+	case EInputMode::UIOnly:
+		{
+			FInputModeUIOnly InputModeData{};
+			InputModeData.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+			PlayerController->SetInputMode(InputModeData);
+		}
+		break;
+	case EInputMode::GameAndUI:
+		{
+			FInputModeGameAndUI InputModeData{};
+			PlayerController->SetInputMode(InputModeData);
+		}
+		break;
+	default:
+		UE_LOGFMT(LogTemp, Error, "Unknown input mode: {InputMode}", static_cast<int32>(InputMode));
+	}
+}
 //
 // void ALambdaSnailHUD::SetControllerOptions(FScreenPtr const& Screen, APlayerController* PlayerController) const
 // {
