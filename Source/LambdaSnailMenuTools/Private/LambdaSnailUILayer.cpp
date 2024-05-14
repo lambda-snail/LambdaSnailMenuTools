@@ -74,16 +74,20 @@ void ULambdaSnailUILayer::HideTopWidget() const
 		FScreenPtr const TopWidget = ActiveScreenStack.Last();
 		TopWidget->SetVisibility(ESlateVisibility::Collapsed); // TODO: Make more dynamic, per-layer basis?
 		LayerSlot->ClearChildren();
+
+		TopWidget->OnRequestCloseSelf.Unbind();
 	}
 }
 
-void ULambdaSnailUILayer::ShowTopWidget() const
+void ULambdaSnailUILayer::ShowTopWidget()
 {
 	if(ActiveScreenStack.Num() > 0)
 	{
 		FScreenPtr const NextWidget = ActiveScreenStack.Last();
 		NextWidget->SetVisibility(ESlateVisibility::Visible);
 		LayerSlot->AddChild(NextWidget.Get());
+
+		NextWidget->OnRequestCloseSelf.BindUObject(this, &ThisClass::Screen_OnRequestCloseSelf);
 	}
 }
 
@@ -98,4 +102,14 @@ void ULambdaSnailUILayer::NativeDestruct()
 	CachedScreens.Empty();
 	
 	Super::NativeDestruct();
+}
+
+void ULambdaSnailUILayer::Screen_OnRequestCloseSelf()
+{
+	PopScreen();
+
+	if(ActiveScreenStack.Num() == 0 and OnLayerTopScreenAutoClose.IsBound())
+	{
+		OnLayerTopScreenAutoClose.Execute();
+	}
 }

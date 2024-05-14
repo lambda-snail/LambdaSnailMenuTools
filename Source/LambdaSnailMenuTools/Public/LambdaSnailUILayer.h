@@ -8,6 +8,8 @@
 class UNamedSlot;
 class ULambdaSnailScreen;
 
+DECLARE_DELEGATE(FOnLayerTopScreenAutoClose);
+
 USTRUCT()
 struct FScreenCreationParams
 {
@@ -39,7 +41,9 @@ public:
 	void RegisterCachedScreen(FGameplayTag const& Tag, UUserWidget* Widget) const;
 
 	void HideTopWidget() const;
-	void ShowTopWidget() const;
+	void ShowTopWidget();
+
+	FOnLayerTopScreenAutoClose OnLayerTopScreenAutoClose;
 protected:
 	virtual void NativeConstruct() override;
 	virtual void NativeDestruct() override;
@@ -58,4 +62,6 @@ private:
 
 	FScreenArray ActiveScreenStack {};
 	FScreenMap CachedScreens {};
+
+	void Screen_OnRequestCloseSelf();
 };

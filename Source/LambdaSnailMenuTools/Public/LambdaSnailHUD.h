@@ -39,6 +39,29 @@ struct FLayerParams
 	 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	bool bAlwaysVisible;
+
+	int32 Priority;
+};
+
+USTRUCT()
+struct FLayerCreationParams
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditDefaultsOnly)
+	FGameplayTag LayerTag;
+
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<ULambdaSnailUILayer> LayerClass;
+
+	UPROPERTY(EditDefaultsOnly)
+	EInputMode InputMode;
+
+	UPROPERTY(EditDefaultsOnly)
+	bool bShowMouseCursor;
+	
+	UPROPERTY(EditDefaultsOnly)
+	bool bAlwaysVisible;
 };
 
 UCLASS(Blueprintable, BlueprintType)
@@ -58,10 +81,18 @@ public:
 
 	void CollapseAllExceptHUD();
 
+protected:
+	virtual void BeginPlay() override;
+	
 private:
 
 	UPROPERTY()
 	TMap<FGameplayTag, FLayerParams> LayerMap;
 
 	void SetInputMode(EInputMode InputMode, APlayerController* PlayerController) const;
+
+	UPROPERTY(EditDefaultsOnly)
+	TArray<FLayerCreationParams> LayerCreationParams;
+
+	TArray<int32, FGameplayTag> LayerPriorities;
 };

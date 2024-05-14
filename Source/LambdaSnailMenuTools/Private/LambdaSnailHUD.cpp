@@ -2,6 +2,7 @@
 
 #include "LambdaSnailUILayer.h"
 #include "Logging/StructuredLog.h"
+#include "WorldPartition/DataLayer/DataLayerSubsystem.h"
 
 void ALambdaSnailHUD::RegisterLayer(FLayerParams const LayerParams)
 {
@@ -50,6 +51,35 @@ void ALambdaSnailHUD::PopScreenFromLayer(FGameplayTag const LayerTag)
 void ALambdaSnailHUD::CollapseAllExceptHUD()
 {
 
+}
+
+void ALambdaSnailHUD::BeginPlay()
+{
+	APlayerController* PlayerController = GetWorld()->GetFirstPlayerController();
+	if(not PlayerController)
+	{
+		return;
+	}
+
+	int32 priority {};
+	for(FLayerCreationParams const& LayerCreationParam : LayerCreationParams)
+	{
+		ULambdaSnailUILayer* Layer = CreateWidget<ULambdaSnailUILayer>(PlayerController, LayerCreationParam.LayerClass);
+		FLayerParams const LayerParams
+		{
+			.LayerTag = LayerCreationParam.LayerTag,
+			.Layer = Layer,
+			.InputMode = LayerCreationParam.InputMode,
+			.bShowMouseCursor = LayerCreationParam.bShowMouseCursor,
+			.bAlwaysVisible = LayerCreationParam.bAlwaysVisible,
+			.Priority = priority++
+		};
+		
+		RegisterLayer(LayerParams);
+		LayerPriorities.Add(LayerParams.Priority, LayerParams.LayerTag);
+	}
+	
+	Super::BeginPlay();
 }
 
 // void ALambdaSnailHUD::SetControllerOptions(FScreenPtr const& Screen) const

@@ -4,6 +4,8 @@
 
 #include "LambdaSnailScreen.generated.h"
 
+DECLARE_DELEGATE(FOnRequestCloseSelf)
+
 UCLASS()
 class ULambdaSnailScreen : public UUserWidget
 {
@@ -12,4 +14,9 @@ class ULambdaSnailScreen : public UUserWidget
 public:
 	void OnVisibilityChange(bool bIsVisible);
 	
+	FOnRequestCloseSelf OnRequestCloseSelf;
+
+protected:
+	UFUNCTION(BlueprintCallable)
+	void RequestCloseSelf() const;
 };
