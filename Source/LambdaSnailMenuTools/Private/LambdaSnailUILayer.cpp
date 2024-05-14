@@ -91,6 +91,11 @@ void ULambdaSnailUILayer::ShowTopWidget()
 	}
 }
 
+bool ULambdaSnailUILayer::IsEmpty() const
+{
+	return ActiveScreenStack.Num() == 0;
+}
+
 void ULambdaSnailUILayer::NativeConstruct()
 {
 	Super::NativeConstruct();

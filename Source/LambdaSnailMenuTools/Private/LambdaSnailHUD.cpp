@@ -2,12 +2,20 @@
 
 #include "LambdaSnailUILayer.h"
 #include "Logging/StructuredLog.h"
-#include "WorldPartition/DataLayer/DataLayerSubsystem.h"
 
 void ALambdaSnailHUD::RegisterLayer(FLayerParams const LayerParams)
 {
 	LayerMap.Add(LayerParams.LayerTag, LayerParams);
 	LayerParams.Layer->AddToViewport();
+}
+
+void ALambdaSnailHUD::SetLayerPreferredInputParams(FLayerParams const& LayerParams) const
+{
+	if(APlayerController* PlayerController = GetWorld()->GetFirstPlayerController())
+	{
+		PlayerController->SetShowMouseCursor(LayerParams.bShowMouseCursor);
+		SetInputMode(LayerParams.InputMode, PlayerController);
+	}
 }
 
 void ALambdaSnailHUD::PushScreenToLayer(FGameplayTag const LayerTag, FGameplayTag const ScreenTag)
@@ -16,12 +24,7 @@ void ALambdaSnailHUD::PushScreenToLayer(FGameplayTag const LayerTag, FGameplayTa
 	{
 		LayerParams->Layer->PushScreen(ScreenTag);
 		
-		APlayerController* PlayerController = GetWorld()->GetFirstPlayerController();
-		if(PlayerController)
-		{
-			PlayerController->SetShowMouseCursor(LayerParams->bShowMouseCursor);
-			SetInputMode(LayerParams->InputMode, PlayerController);
-		}
+		SetLayerPreferredInputParams(*LayerParams);
 	}
 }
 
@@ -74,12 +77,29 @@ void ALambdaSnailHUD::BeginPlay()
 			.bAlwaysVisible = LayerCreationParam.bAlwaysVisible,
 			.Priority = priority++
 		};
+
+		Layer->OnLayerTopScreenAutoClose.BindUObject(this, &ThisClass::UILayer_OnTopScreenClose);
 		
 		RegisterLayer(LayerParams);
-		LayerPriorities.Add(LayerParams.Priority, LayerParams.LayerTag);
+		LayerPriorities.Add(LayerParams.LayerTag);
 	}
 	
 	Super::BeginPlay();
+}
+
+void ALambdaSnailHUD::UILayer_OnTopScreenClose()
+{
+	int32 HighestLayerWithActiveScreens { 0 };
+	for(int32 Priority = LayerPriorities.Num() - 1; 0 <= Priority; --Priority)
+	{
+		if(not LayerMap[LayerPriorities[Priority]].Layer->IsEmpty())
+		{
+			HighestLayerWithActiveScreens = Priority;
+			break;
+		}
+	}
+
+	SetLayerPreferredInputParams(LayerMap[LayerPriorities[HighestLayerWithActiveScreens]]);
 }
 
 // void ALambdaSnailHUD::SetControllerOptions(FScreenPtr const& Screen) const

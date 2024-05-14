@@ -43,6 +43,8 @@ public:
 	void HideTopWidget() const;
 	void ShowTopWidget();
 
+	bool IsEmpty() const;
+
 	FOnLayerTopScreenAutoClose OnLayerTopScreenAutoClose;
 protected:
 	virtual void NativeConstruct() override;

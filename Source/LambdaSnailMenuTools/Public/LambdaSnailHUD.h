@@ -82,6 +82,7 @@ public:
 	void CollapseAllExceptHUD();
 
 protected:
+	void UILayer_OnTopScreenClose();
 	virtual void BeginPlay() override;
 	
 private:
@@ -90,9 +91,10 @@ private:
 	TMap<FGameplayTag, FLayerParams> LayerMap;
 
 	void SetInputMode(EInputMode InputMode, APlayerController* PlayerController) const;
-
+	void SetLayerPreferredInputParams(FLayerParams const& LayerParams) const;
+	
 	UPROPERTY(EditDefaultsOnly)
 	TArray<FLayerCreationParams> LayerCreationParams;
 
-	TArray<int32, FGameplayTag> LayerPriorities;
+	TArray<FGameplayTag> LayerPriorities;
 };
