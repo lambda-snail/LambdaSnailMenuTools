@@ -1,69 +1,34 @@
 ﻿#pragma once
 
-#include "GameplayTagContainer.h"
-#include "Blueprint/UserWidget.h"
+#include "LambdaSnailUiManager.h"
+#include "Widgets/CommonActivatableWidgetContainer.h"
 
 #include "LambdaSnailUILayer.generated.h"
 
 class UNamedSlot;
-class ULambdaSnailScreen;
+class ULambdaSnailActivatableWidget;
 
-DECLARE_DELEGATE(FOnLayerTopScreenAutoClose);
-
-USTRUCT()
-struct FScreenCreationParams
+USTRUCT(Blueprintable)
+struct FDefaultLayerWidgetInitializationParams
 {
 	GENERATED_BODY()
 	
-	UPROPERTY(EditDefaultsOnly)
-	TSubclassOf<ULambdaSnailScreen> ScreenType;
-
-	UPROPERTY(EditDefaultsOnly)
-	FGameplayTag Tag;
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<ULambdaSnailActivatableWidget> WidgetClass;
 };
 
 UCLASS(Blueprintable, BlueprintType)
-class ULambdaSnailUILayer : public UUserWidget
+class ULambdaSnailUILayer : public UCommonActivatableWidgetStack
 {
 	GENERATED_BODY()
 
-	using FScreenPtr = TStrongObjectPtr<ULambdaSnailScreen>;
-	using FScreenArray = TArray<FScreenPtr>;
-	using FScreenMap = TMap<FGameplayTag, FScreenPtr>;
-	
 public:
-	virtual bool Initialize() override;
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void Initialize();
 	
-	void PushScreen(FGameplayTag const& Tag);
-	void PushTemporaryScreen(TSubclassOf<ULambdaSnailScreen> const& Widget) const;
-	void PopScreen();
-	
-	void RegisterCachedScreen(FGameplayTag const& Tag, UUserWidget* Widget) const;
-
-	void HideTopWidget() const;
-	void ShowTopWidget();
-
-	bool IsEmpty() const;
-
-	FOnLayerTopScreenAutoClose OnLayerTopScreenAutoClose;
 protected:
-	virtual void NativeConstruct() override;
-	virtual void NativeDestruct() override;
 
-	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UNamedSlot> LayerSlot;
-	
-	/**
-	 * These screens will be created and added to the cache when the layer is initialized.
-	 * Equivalent to calling PushScreen for each widget.
-	 */
-	UPROPERTY(EditDefaultsOnly)
-	TArray<FScreenCreationParams> InitialScreens;
-	
-private:
-
-	FScreenArray ActiveScreenStack {};
-	FScreenMap CachedScreens {};
-
-	void Screen_OnRequestCloseSelf();
+	// The widgets that will exist on the layer from the start
+	UPROPERTY(EditAnywhere)
+	TArray<FDefaultLayerWidgetInitializationParams> DefaultWidgets;
 };
