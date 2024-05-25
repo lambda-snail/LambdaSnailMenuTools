@@ -7,47 +7,58 @@
 
 class UWidgetBlueprint;
 
-void ULambdaSnailUiManager::RegisterLayer(FGameplayTag const Tag, ULambdaSnailUILayer* Layer)
+void ULambdaSnailUiManager::RegisterLayer(FLayerRegistrationParams LayerRegistrationParams)
 {
-	LayerMap.Add(Tag, Layer);
-	FDelegateHandle Handle = Layer->OnDisplayedWidgetChanged().AddUObject(this, &ULambdaSnailUiManager::WidgetContainer_OnDisplayedWidgetChanged);
-	LayerCallbackHandleMap.Add(Tag, Handle);
+	FLayerContainer Layer
+	{
+		.Layer = LayerRegistrationParams.Layer,
+		.bIsBackgroundLayer = LayerRegistrationParams.bIsBackgroundLayer,
+		.OnWidgetChangeDelegateHandle =
+			LayerRegistrationParams.Layer->OnDisplayedWidgetChanged().AddUObject(this, &ULambdaSnailUiManager::WidgetContainer_OnDisplayedWidgetChanged)
+	};
+
+	LayerMap.Add(LayerRegistrationParams.Tag, Layer);
 }
 
 void ULambdaSnailUiManager::PushWidgetToLayer(FGameplayTag const LayerTag, TSubclassOf<ULambdaSnailActivatableWidget> WidgetClass)
 {
-	if(TObjectPtr<ULambdaSnailUILayer> const* Layer = LayerMap.Find(LayerTag))
+	if(FLayerContainer const* Layer = LayerMap.Find(LayerTag))
 	{
-		Layer->Get()->AddWidget<ULambdaSnailActivatableWidget>(WidgetClass);
+		Layer->Layer->AddWidget<ULambdaSnailActivatableWidget>(WidgetClass);
 	}
 }
 
 void ULambdaSnailUiManager::PopWidgetFromLayer(FGameplayTag const LayerTag)
 {
-	if(TObjectPtr<ULambdaSnailUILayer> const* Layer = LayerMap.Find(LayerTag))
+	if(FLayerContainer const* Layer = LayerMap.Find(LayerTag))
 	{
-		UCommonActivatableWidget* Widget = Layer->Get()->GetActiveWidget();
+		UCommonActivatableWidget* Widget = Layer->Layer->GetActiveWidget();
 		Widget->DeactivateWidget();
 	}
 }
 
 void ULambdaSnailUiManager::NativeDestruct()
 {
-	for (auto [Tag, Handle] : LayerCallbackHandleMap)
+	for (auto [Tag, Layer] : LayerMap)
 	{
-		Handle.Reset();
+		Layer.OnWidgetChangeDelegateHandle.Reset();
 	}
 
-	LayerCallbackHandleMap.Empty();
+	LayerMap.Empty();
 	Super::NativeDestruct();
 }
 
+/**
+ * When a widget is added or removed, check if there are any active widgets left that are not
+ * marked as background widgets, and restore input to the game. This is necessary as CommonUI
+ * does not restore the input in this case.
+ */
 void ULambdaSnailUiManager::WidgetContainer_OnDisplayedWidgetChanged(UCommonActivatableWidget* Widget)
 {
 	bool bHasActiveWidgets = false;
 	for (auto [Tag, Layer] : LayerMap)
 	{
-		if(Layer->GetActiveWidget())
+		if(Layer.Layer->GetActiveWidget() and not Layer.bIsBackgroundLayer)
 		{
 			bHasActiveWidgets = true;
 			break;

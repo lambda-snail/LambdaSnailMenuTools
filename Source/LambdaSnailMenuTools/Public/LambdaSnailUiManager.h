@@ -20,6 +20,31 @@ enum class EInputMode : uint8
 	GameAndUI
 };
 
+USTRUCT(Blueprintable, BlueprintType)
+struct FLayerRegistrationParams
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, Blueprintable, BlueprintReadWrite)
+	FGameplayTag Tag;
+	
+	UPROPERTY(EditAnywhere, Blueprintable, BlueprintReadWrite)
+	ULambdaSnailUILayer* Layer;
+	
+	UPROPERTY(EditAnywhere, Blueprintable, BlueprintReadWrite)
+	bool bIsBackgroundLayer = false;
+};
+
+USTRUCT()
+struct FLayerContainer
+{
+	GENERATED_BODY()
+	
+	TObjectPtr<ULambdaSnailUILayer> Layer;
+	bool bIsBackgroundLayer = false;
+	FDelegateHandle OnWidgetChangeDelegateHandle;
+};
+
 UCLASS(Abstract, Blueprintable, BlueprintType)
 class LAMBDASNAILMENUTOOLS_API ULambdaSnailUiManager : public UCommonUserWidget
 {
@@ -27,7 +52,7 @@ class LAMBDASNAILMENUTOOLS_API ULambdaSnailUiManager : public UCommonUserWidget
 	
 public:
 	UFUNCTION(BlueprintCallable)
-	void RegisterLayer(FGameplayTag const Tag, ULambdaSnailUILayer* Layer);
+	void RegisterLayer(FLayerRegistrationParams LayerRegistrationParams);
 
 	UFUNCTION(BlueprintCallable)
 	void PushWidgetToLayer(FGameplayTag const LayerTag, TSubclassOf<ULambdaSnailActivatableWidget> WidgetClass);
@@ -41,8 +66,7 @@ protected:
 private:
 
 	UPROPERTY()
-	TMap<FGameplayTag, TObjectPtr<ULambdaSnailUILayer>> LayerMap;
-	TMap<FGameplayTag, FDelegateHandle> LayerCallbackHandleMap;
+	TMap<FGameplayTag, FLayerContainer> LayerMap;
 
 	void WidgetContainer_OnDisplayedWidgetChanged(UCommonActivatableWidget* Widget);
 };
