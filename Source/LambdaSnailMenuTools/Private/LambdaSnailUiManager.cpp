@@ -75,8 +75,7 @@ void ULambdaSnailUiManager::WidgetContainer_OnDisplayedWidgetChanged(UCommonActi
 	ULocalPlayer const* LocalPlayer = GetWorld()->GetFirstLocalPlayerFromController();
 	if(UCommonUIActionRouterBase* InputSubsystem = LocalPlayer->GetSubsystem<UCommonUIActionRouterBase>())
 	{
-		FUIInputConfig const InputConfig(ECommonInputMode::Game, EMouseCaptureMode::CapturePermanently);
-		InputSubsystem->SetActiveUIInputConfig(InputConfig);
+		InputSubsystem->SetActiveUIInputConfig(DefaultInputConfig);
 	}
 }
 

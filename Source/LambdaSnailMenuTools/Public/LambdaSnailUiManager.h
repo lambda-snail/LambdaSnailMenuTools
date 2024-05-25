@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "CoreMinimal.h"
+#include "CommonInputModeTypes.h"
 #include "CommonUserWidget.h"
 #include "NativeGameplayTags.h"
 
@@ -12,15 +13,7 @@ class ULambdaSnailActivatableWidget;
 class ULambdaSnailUILayer;
 class UUserWidget;
 
-UENUM()
-enum class EInputMode : uint8
-{
-	GameOnly,
-	UIOnly,
-	GameAndUI
-};
-
-USTRUCT(Blueprintable, BlueprintType)
+USTRUCT(BlueprintType)
 struct FLayerRegistrationParams
 {
 	GENERATED_BODY()
@@ -62,6 +55,10 @@ public:
 
 protected:
 	virtual void NativeDestruct() override;
+
+	// The input configuration to revert to when all non-background widgets are deactivated
+	UPROPERTY(EditDefaultsOnly, Category = "LambdaSnail|UI Manager")
+	FUIInputConfig DefaultInputConfig = { ECommonInputMode::Game, EMouseCaptureMode::CapturePermanently };
 	
 private:
 
