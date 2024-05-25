@@ -78,32 +78,3 @@ void ULambdaSnailUiManager::WidgetContainer_OnDisplayedWidgetChanged(UCommonActi
 		InputSubsystem->SetActiveUIInputConfig(DefaultInputConfig);
 	}
 }
-
-//
-// void ULambdaSnailUiManager::SetInputMode(EInputMode InputMode, APlayerController* PlayerController) const
-// {
-// 	switch(InputMode)
-// 	{
-// 	case EInputMode::GameOnly:
-// 		{
-// 			FInputModeGameOnly InputModeData{};
-// 			PlayerController->SetInputMode(InputModeData);
-// 		}
-// 		break;
-// 	case EInputMode::UIOnly:
-// 		{
-// 			FInputModeUIOnly InputModeData{};
-// 			InputModeData.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
-// 			PlayerController->SetInputMode(InputModeData);
-// 		}
-// 		break;
-// 	case EInputMode::GameAndUI:
-// 		{
-// 			FInputModeGameAndUI InputModeData{};
-// 			PlayerController->SetInputMode(InputModeData);
-// 		}
-// 		break;
-// 	default:
-// 		UE_LOGFMT(LogTemp, Error, "Unknown input mode: {InputMode}", static_cast<int32>(InputMode));
-// 	}
-// }
