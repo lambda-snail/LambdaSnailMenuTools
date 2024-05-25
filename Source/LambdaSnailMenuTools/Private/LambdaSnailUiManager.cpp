@@ -3,12 +3,15 @@
 #include "CommonActivatableWidget.h"
 #include "LambdaSnailActivatableWidget.h"
 #include "LambdaSnailUILayer.h"
+#include "Input/CommonUIActionRouterBase.h"
 
 class UWidgetBlueprint;
 
 void ULambdaSnailUiManager::RegisterLayer(FGameplayTag const Tag, ULambdaSnailUILayer* Layer)
 {
 	LayerMap.Add(Tag, Layer);
+	FDelegateHandle Handle = Layer->OnDisplayedWidgetChanged().AddUObject(this, &ULambdaSnailUiManager::WidgetContainer_OnDisplayedWidgetChanged);
+	LayerCallbackHandleMap.Add(Tag, Handle);
 }
 
 void ULambdaSnailUiManager::PushWidgetToLayer(FGameplayTag const LayerTag, TSubclassOf<ULambdaSnailActivatableWidget> WidgetClass)
@@ -27,6 +30,45 @@ void ULambdaSnailUiManager::PopWidgetFromLayer(FGameplayTag const LayerTag)
 		Widget->DeactivateWidget();
 	}
 }
+
+void ULambdaSnailUiManager::NativeDestruct()
+{
+	for (auto [Tag, Handle] : LayerCallbackHandleMap)
+	{
+		Handle.Reset();
+	}
+
+	LayerCallbackHandleMap.Empty();
+	Super::NativeDestruct();
+}
+
+void ULambdaSnailUiManager::WidgetContainer_OnDisplayedWidgetChanged(UCommonActivatableWidget* Widget)
+{
+	bool bHasActiveWidgets = false;
+	for (auto [Tag, Layer] : LayerMap)
+	{
+		if(Layer->GetActiveWidget())
+		{
+			bHasActiveWidgets = true;
+			break;
+		}
+	}
+
+	// Active widgets exist, leave input to CommonUI
+	if(bHasActiveWidgets)
+	{
+		return;
+	}
+
+	// No active widgets, restore input to game
+	ULocalPlayer const* LocalPlayer = GetWorld()->GetFirstLocalPlayerFromController();
+	if(UCommonUIActionRouterBase* InputSubsystem = LocalPlayer->GetSubsystem<UCommonUIActionRouterBase>())
+	{
+		FUIInputConfig const InputConfig(ECommonInputMode::Game, EMouseCaptureMode::CapturePermanently);
+		InputSubsystem->SetActiveUIInputConfig(InputConfig);
+	}
+}
+
 //
 // void ULambdaSnailUiManager::SetInputMode(EInputMode InputMode, APlayerController* PlayerController) const
 // {
