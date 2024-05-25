@@ -25,13 +25,13 @@ struct FLayerRegistrationParams
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, Blueprintable, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FGameplayTag Tag;
 	
-	UPROPERTY(EditAnywhere, Blueprintable, BlueprintReadWrite)
-	ULambdaSnailUILayer* Layer;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<ULambdaSnailUILayer> Layer;
 	
-	UPROPERTY(EditAnywhere, Blueprintable, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bIsBackgroundLayer = false;
 };
 
