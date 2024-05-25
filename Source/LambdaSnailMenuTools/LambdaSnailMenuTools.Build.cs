@@ -27,7 +27,7 @@ public class LambdaSnailMenuTools : ModuleRules
 			{
 				"Core",
 				"UMG",
-				"GameplayTags"
+				"GameplayTags", "CommonUI"
 			}
 			);
 			
@@ -38,7 +38,7 @@ public class LambdaSnailMenuTools : ModuleRules
 				"CoreUObject",
 				"Engine",
 				"Slate",
-				"SlateCore",
+				"SlateCore"
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);
