@@ -8,4 +8,5 @@ class ULambdaSnailActivatableWidget : public UCommonActivatableWidget
 {
 	GENERATED_BODY()
 
+	ULambdaSnailActivatableWidget();
 };

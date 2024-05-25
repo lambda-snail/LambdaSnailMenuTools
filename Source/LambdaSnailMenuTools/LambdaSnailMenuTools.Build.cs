@@ -27,7 +27,8 @@ public class LambdaSnailMenuTools : ModuleRules
 			{
 				"Core",
 				"UMG",
-				"GameplayTags", "CommonUI"
+				"GameplayTags", 
+				"CommonUI"
 			}
 			);
 			
