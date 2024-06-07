@@ -25,9 +25,8 @@ class ULambdaSnailUILayer : public UCommonActivatableWidgetStack
 public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void Initialize();
-	
-protected:
 
+protected:
 	// The widgets that will exist on the layer from the start
 	UPROPERTY(EditAnywhere)
 	TArray<FDefaultLayerWidgetInitializationParams> DefaultWidgets;

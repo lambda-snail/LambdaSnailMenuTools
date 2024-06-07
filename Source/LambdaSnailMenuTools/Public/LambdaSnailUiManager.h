@@ -7,6 +7,7 @@
 
 #include "LambdaSnailUiManager.generated.h"
 
+class UCommonActivatableWidgetStack;
 class UCommonActivatableWidget;
 class UOverlay;
 class ULambdaSnailActivatableWidget;
@@ -52,7 +53,7 @@ public:
 	
 	UFUNCTION(BlueprintCallable)
 	void PopWidgetFromLayer(FGameplayTag const LayerTag);
-
+	
 protected:
 	virtual void NativeDestruct() override;
 
