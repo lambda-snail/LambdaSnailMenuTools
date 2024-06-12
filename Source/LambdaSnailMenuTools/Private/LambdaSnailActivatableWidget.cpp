@@ -1,6 +1,6 @@
 ﻿#include "LambdaSnailActivatableWidget.h"
 
-ULambdaSnailActivatableWidget::ULambdaSnailActivatableWidget() : Super()
+ULambdaSnailActivatableWidget::ULambdaSnailActivatableWidget() : Super::UCommonActivatableWidget()
 {
 	bIsBackHandler = true;
 }

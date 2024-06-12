@@ -1,8 +1,0 @@
-﻿#pragma once
-
-#include "NativeGameplayTags.h"
-
-UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_LambdaSnail_Ui_Hud);
-UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_LambdaSnail_Ui_InGameMenu);
-UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_LambdaSnail_Ui_Menu);
-UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_LambdaSnail_Ui_Modals);

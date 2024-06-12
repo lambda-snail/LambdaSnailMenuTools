@@ -20,7 +20,7 @@ void ULambdaSnailUiManager::RegisterLayer(FLayerRegistrationParams LayerRegistra
 	LayerMap.Add(LayerRegistrationParams.Tag, Layer);
 }
 
-void ULambdaSnailUiManager::PushWidgetToLayer(FGameplayTag const LayerTag, TSubclassOf<ULambdaSnailActivatableWidget> WidgetClass)
+void ULambdaSnailUiManager::PushWidgetToLayer(FGameplayTag const& LayerTag, TSubclassOf<ULambdaSnailActivatableWidget> WidgetClass)
 {
 	if(FLayerContainer const* Layer = LayerMap.Find(LayerTag))
 	{

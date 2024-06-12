@@ -1,10 +1,11 @@
 ﻿#pragma once
 
+#include "CoreMinimal.h"
 #include "CommonActivatableWidget.h"
 #include "LambdaSnailActivatableWidget.generated.h"
 
 UCLASS()
-class ULambdaSnailActivatableWidget : public UCommonActivatableWidget
+class LAMBDASNAILMENUTOOLS_API ULambdaSnailActivatableWidget : public UCommonActivatableWidget
 {
 	GENERATED_BODY()
 

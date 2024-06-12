@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "CommonInputModeTypes.h"
 #include "CommonUserWidget.h"
+#include "LambdaSnailUILayer.h"
 #include "NativeGameplayTags.h"
 
 #include "LambdaSnailUiManager.generated.h"
@@ -11,7 +12,6 @@ class UCommonActivatableWidgetStack;
 class UCommonActivatableWidget;
 class UOverlay;
 class ULambdaSnailActivatableWidget;
-class ULambdaSnailUILayer;
 class UUserWidget;
 
 USTRUCT(BlueprintType)
@@ -33,7 +33,8 @@ USTRUCT()
 struct FLayerContainer
 {
 	GENERATED_BODY()
-	
+
+	UPROPERTY()
 	TObjectPtr<ULambdaSnailUILayer> Layer;
 	bool bIsBackgroundLayer = false;
 	FDelegateHandle OnWidgetChangeDelegateHandle;
@@ -49,7 +50,14 @@ public:
 	void RegisterLayer(FLayerRegistrationParams LayerRegistrationParams);
 
 	UFUNCTION(BlueprintCallable)
-	void PushWidgetToLayer(FGameplayTag const LayerTag, TSubclassOf<ULambdaSnailActivatableWidget> WidgetClass);
+	void PushWidgetToLayer(FGameplayTag const& LayerTag, TSubclassOf<ULambdaSnailActivatableWidget> WidgetClass);
+
+	/**
+	 * Push the given widget to the stack, and run the provided initialization function before displaying the widget
+	 * in the viewport. 
+	 */
+	template<typename TWidget = ULambdaSnailActivatableWidget>
+	void PushWidgetToLayer(FGameplayTag const LayerTag, TSubclassOf<TWidget> WidgetClass, TFunctionRef<void(TWidget&)> WidgetInitializer);
 	
 	UFUNCTION(BlueprintCallable)
 	void PopWidgetFromLayer(FGameplayTag const LayerTag);
@@ -68,3 +76,13 @@ private:
 
 	void WidgetContainer_OnDisplayedWidgetChanged(UCommonActivatableWidget* Widget);
 };
+
+template <typename TWidget>
+void ULambdaSnailUiManager::PushWidgetToLayer(FGameplayTag const LayerTag, TSubclassOf<TWidget> WidgetClass, TFunctionRef<void(TWidget&)> WidgetInitializer)
+{
+	static_assert(std::is_base_of_v<ULambdaSnailActivatableWidget, TWidget>);
+	if(FLayerContainer const* Layer = LayerMap.Find(LayerTag))
+	{
+		Layer->Layer->AddWidget(WidgetClass, WidgetInitializer);
+	}
+}

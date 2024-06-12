@@ -1,6 +1,5 @@
 ﻿#pragma once
 
-#include "LambdaSnailUiManager.h"
 #include "Widgets/CommonActivatableWidgetContainer.h"
 
 #include "LambdaSnailUILayer.generated.h"
